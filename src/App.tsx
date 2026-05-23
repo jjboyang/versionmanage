@@ -3,6 +3,7 @@ import VersionList from './components/VersionList'
 import TaskList from './components/TaskList'
 import Overview from './components/Overview'
 import AssigneeOverview from './components/AssigneeOverview'
+import AuditPanel from './components/AuditPanel'
 import {
   downloadBackup,
   importBackup,
@@ -12,8 +13,10 @@ import {
   autoBackup,
   getLastBackupDate,
 } from './backup'
+import { getVersions, subscribeToDataChanges, syncFromServer, DATA_CHANGED_EVENT } from './store'
+import { applyTheme, getStoredTheme, THEMES, type ThemeId } from './theme'
 
-type Tab = 'tasks' | 'overview' | 'assignee'
+type Tab = 'tasks' | 'overview' | 'assignee' | 'audit'
 
 export default function App() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
@@ -23,14 +26,43 @@ export default function App() {
   const [folderChecking, setFolderChecking] = useState(true)
   const [restoreMsg, setRestoreMsg] = useState<string | null>(null)
   const [lastBackup, setLastBackup] = useState<string | null>(getLastBackupDate())
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [theme, setTheme] = useState<ThemeId>(getStoredTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleThemeChange = (id: ThemeId) => {
+    setTheme(id)
+    applyTheme(id)
+  }
 
   const handleSelect = useCallback((id: string) => {
     setSelectedVersionId(id)
     setRefreshKey((k) => k + 1)
   }, [])
 
-  // Init: check if backup folder is configured
+  useEffect(() => {
+    syncFromServer()
+    return subscribeToDataChanges(() => {
+      setRefreshKey((k) => k + 1)
+      setSelectedVersionId((current) => {
+        if (!current) return current
+        return getVersions().some((version) => version.id === current) ? current : null
+      })
+    })
+  }, [])
+
+  // Sync error listener
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.key === 'sync-error') {
+        setSyncError(detail?.error || '操作失败，请检查服务器连接')
+        setTimeout(() => setSyncError(null), 6000)
+      }
+    }
+    window.addEventListener(DATA_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(DATA_CHANGED_EVENT, handler)
+  }, [])
   useEffect(() => {
     isFolderConfigured().then((ok) => {
       setFolderReady(ok)
@@ -64,8 +96,8 @@ export default function App() {
     }
   }
 
-  const handleExport = () => {
-    downloadBackup()
+  const handleExport = async () => {
+    await downloadBackup()
     setLastBackup(getLastBackupDate())
   }
 
@@ -89,14 +121,17 @@ export default function App() {
           <TaskList versionId={selectedVersionId} refreshKey={refreshKey} />
         ) : (
           <div className="empty-state">
-            <div className="empty-icon">📋</div>
+            <div className="empty-icon" aria-hidden="true" />
             <p>请从左侧选择一个版本查看任务</p>
+            <span className="empty-hint-sub">在左侧版本列表中点击条目即可加载任务</span>
           </div>
         )
       case 'overview':
         return <Overview />
       case 'assignee':
         return <AssigneeOverview />
+      case 'audit':
+        return <AuditPanel />
     }
   }
 
@@ -104,27 +139,59 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>版本任务管理系统</h1>
-        <nav className="app-nav">
+        <nav className="app-nav" role="tablist" aria-label="主导航">
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'tasks'}
             className={`nav-tab ${tab === 'tasks' ? 'active' : ''}`}
             onClick={() => setTab('tasks')}
           >
             任务管理
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'overview'}
             className={`nav-tab ${tab === 'overview' ? 'active' : ''}`}
             onClick={() => setTab('overview')}
           >
             总览看板
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'assignee'}
             className={`nav-tab ${tab === 'assignee' ? 'active' : ''}`}
             onClick={() => setTab('assignee')}
           >
             负责人看板
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'audit'}
+            className={`nav-tab ${tab === 'audit' ? 'active' : ''}`}
+            onClick={() => setTab('audit')}
+          >
+            系统记录
+          </button>
         </nav>
         <div className="header-actions">
+          <div className="theme-switch" role="group" aria-label="界面主题">
+            {THEMES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`theme-switch-btn ${theme === item.id ? 'active' : ''}`}
+                onClick={() => handleThemeChange(item.id)}
+                title={item.description}
+                aria-pressed={theme === item.id}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           {!folderChecking && !folderReady && (
             <button className="btn-header-warn" onClick={handleSetupFolder}>
               配置自动备份
@@ -152,11 +219,22 @@ export default function App() {
         </div>
       </header>
 
+      {/* Sync error toast */}
+      {syncError && (
+        <div className="backup-banner banner-error toast-enter" role="alert">
+          <span>{syncError}</span>
+          <button type="button" className="btn-dismiss" onClick={() => setSyncError(null)} aria-label="关闭">×</button>
+        </div>
+      )}
+
       {/* Restore message */}
       {restoreMsg && (
-        <div className={`backup-banner ${restoreMsg.includes('成功') ? 'banner-success' : 'banner-error'}`}>
+        <div
+          className={`backup-banner ${restoreMsg.includes('成功') ? 'banner-success' : 'banner-error'} toast-enter`}
+          role="status"
+        >
           <span>{restoreMsg}</span>
-          <button className="btn-cancel-sm" onClick={() => setRestoreMsg(null)}>×</button>
+          <button type="button" className="btn-dismiss" onClick={() => setRestoreMsg(null)} aria-label="关闭">×</button>
         </div>
       )}
 
@@ -165,7 +243,6 @@ export default function App() {
           <VersionList
             selectedId={selectedVersionId}
             onSelect={handleSelect}
-            refreshKey={refreshKey}
           />
         </aside>
         <main className="main">

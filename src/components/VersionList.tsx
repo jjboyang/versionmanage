@@ -1,29 +1,58 @@
-import { useState, useRef, useEffect } from 'react'
-import type { Version } from '../types'
-import { getVersions, addVersion, updateVersion, deleteVersion, getVersionGroups } from '../store'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import type { Version, VersionStatus } from '../types'
+import { getVersions, addVersion, updateVersion, deleteVersion, getVersionGroups, getTasks } from '../store'
+
+const STATUS_OPTIONS: VersionStatus[] = ['未开始', '进行中', '已暂停', '已完成']
+const STATUS_CLASS: Record<VersionStatus, string> = {
+  '未开始': 's-todo',
+  '进行中': 's-progress',
+  '已暂停': 's-paused',
+  '已完成': 's-done',
+}
 
 interface Props {
   selectedId: string | null
   onSelect: (id: string) => void
-  refreshKey: number
 }
 
-export default function VersionList({ selectedId, onSelect, refreshKey }: Props) {
+export default function VersionList({ selectedId, onSelect }: Props) {
   const [, _r] = useState(0)
   const versions = getVersions()
+  const allTasks = getTasks()
   const groups = getVersionGroups()
+
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [group, setGroup] = useState('')
+  const [status, setStatus] = useState<VersionStatus>('未开始')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [groupFilter, setGroupFilter] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editGroup, setEditGroup] = useState('')
+  const [editStatus, setEditStatus] = useState<VersionStatus>('未开始')
+  const [editStartDate, setEditStartDate] = useState('')
+  const [editEndDate, setEditEndDate] = useState('')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const editNameRef = useRef<HTMLInputElement>(null)
 
   // drag state
   const [dragId, setDragId] = useState<string | null>(null)
-  const [dropTarget, setDropTarget] = useState<string | null>(null) // target group name, '__ungrouped__' for ungrouped
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+
+  // Task progress per version
+  const versionProgress = useMemo(() => {
+    const map = new Map<string, { total: number; done: number; inProgress: number }>()
+    for (const t of allTasks) {
+      const entry = map.get(t.versionId) || { total: 0, done: 0, inProgress: 0 }
+      entry.total++
+      if (t.status === '已完成') entry.done++
+      else if (t.status === '进行中') entry.inProgress++
+      map.set(t.versionId, entry)
+    }
+    return map
+  }, [allTasks])
 
   useEffect(() => {
     if (editingId) editNameRef.current?.focus()
@@ -35,11 +64,30 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
     ? groups.filter((g) => g.toLowerCase().includes(groupFilter.toLowerCase()))
     : groups
 
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const handleAdd = () => {
     if (!name.trim()) return
-    addVersion({ name: name.trim(), group: group.trim() })
+    addVersion({
+      name: name.trim(),
+      group: group.trim(),
+      status,
+      startDate,
+      endDate,
+    })
     setName('')
     setGroup('')
+    setStatus('未开始')
+    setStartDate('')
+    setEndDate('')
     setShowForm(false)
     _r(Math.random())
   }
@@ -56,11 +104,20 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
     setEditingId(v.id)
     setEditName(v.name)
     setEditGroup(v.group)
+    setEditStatus(v.status || '未开始')
+    setEditStartDate(v.startDate || '')
+    setEditEndDate(v.endDate || '')
   }
 
   const saveEdit = () => {
     if (!editingId || !editName.trim()) return
-    updateVersion(editingId, { name: editName.trim(), group: editGroup.trim() })
+    updateVersion(editingId, {
+      name: editName.trim(),
+      group: editGroup.trim(),
+      status: editStatus,
+      startDate: editStartDate,
+      endDate: editEndDate,
+    })
     setEditingId(null)
     _r(Math.random())
   }
@@ -98,6 +155,9 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
   }
 
   const renderVersion = (v: Version) => {
+    const progress = versionProgress.get(v.id)
+    const isExpanded = expandedIds.has(v.id)
+
     if (editingId === v.id) {
       return (
         <div key={v.id} className="version-item editing">
@@ -125,6 +185,13 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
             <datalist id="edit-group-datalist">
               {groups.map((g) => <option key={g} value={g} />)}
             </datalist>
+            <select className="field-select" value={editStatus} onChange={(e) => setEditStatus(e.target.value as VersionStatus)}>
+              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <div className="version-date-row">
+              <input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} placeholder="开始日期" />
+              <input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} placeholder="结束日期" />
+            </div>
             <div className="edit-actions">
               <button className="btn-confirm-sm" onClick={saveEdit}>保存</button>
               <button className="btn-cancel-sm" onClick={cancelEdit}>取消</button>
@@ -135,33 +202,74 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
     }
 
     const isDragging = dragId === v.id
+    const isPending = v.id.startsWith('pending-')
 
     return (
-      <div
-        key={v.id}
-        className={`version-item ${v.id === selectedId ? 'active' : ''} ${isDragging ? 'dragging' : ''}`}
-        onClick={() => onSelect(v.id)}
-        draggable
-        onDragStart={() => handleDragStart(v)}
-        onDragEnd={handleDragEnd}
-      >
-        <span className="version-name">⠿ {v.name}</span>
-        <div className="version-actions">
-          <button
-            className="btn-edit-icon"
-            onClick={(e) => startEdit(v, e)}
-            title="编辑"
+      <div key={v.id}>
+        <div
+          className={`version-item ${v.id === selectedId ? 'active' : ''} ${isDragging ? 'dragging' : ''} ${isPending ? 'pending' : ''}`}
+          onClick={() => { if (!isPending) onSelect(v.id) }}
+          draggable={!isPending}
+          onDragStart={() => handleDragStart(v)}
+          onDragEnd={handleDragEnd}
+          title={isPending ? '保存中...' : undefined}
+        >
+          <span
+            className="version-expand-toggle"
+            onClick={(e) => toggleExpand(v.id, e)}
           >
-            ✎
-          </button>
-          <button
-            className="btn-del"
-            onClick={(e) => { e.stopPropagation(); handleDelete(v.id) }}
-            title="删除版本"
-          >
-            ×
-          </button>
+            {isExpanded ? '▼' : '▶'}
+          </span>
+          <span className={`version-status-badge ${STATUS_CLASS[v.status || '未开始']}`}>
+            {v.status || '未开始'}
+          </span>
+          <span className="version-name">{isPending ? '⏳' : '⠿'} {v.name}</span>
+          <div className="version-actions">
+            <button
+              className="btn-edit-icon"
+              onClick={(e) => startEdit(v, e)}
+              title="编辑"
+            >
+              ✎
+            </button>
+            <button
+              className="btn-del"
+              onClick={(e) => { e.stopPropagation(); handleDelete(v.id) }}
+              title="删除版本"
+            >
+              ×
+            </button>
+          </div>
         </div>
+
+        {/* Expanded progress view */}
+        {isExpanded && !isPending && (
+          <div className="version-progress-panel">
+            {progress ? (
+              <>
+                <div className="vp-progress-bar-wrap">
+                  <div
+                    className="vp-progress-fill"
+                    style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
+                  />
+                </div>
+                <div className="vp-progress-text">
+                  已完成 {progress.done}/{progress.total}
+                  {progress.inProgress > 0 && <span className="vp-in-progress"> · 进行中 {progress.inProgress}</span>}
+                  <span className="vp-pct">{Math.round((progress.done / progress.total) * 100)}%</span>
+                </div>
+              </>
+            ) : (
+              <div className="vp-progress-text">暂无任务</div>
+            )}
+            {(v.startDate || v.endDate) && (
+              <div className="vp-dates">
+                {v.startDate && <span>开始: {v.startDate}</span>}
+                {v.endDate && <span>结束: {v.endDate}</span>}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     )
   }
@@ -193,6 +301,13 @@ export default function VersionList({ selectedId, onSelect, refreshKey }: Props)
           <datalist id="group-datalist">
             {groups.map((g) => <option key={g} value={g} />)}
           </datalist>
+          <select className="field-select" value={status} onChange={(e) => setStatus(e.target.value as VersionStatus)}>
+            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <div className="version-date-row">
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} placeholder="开始日期" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} placeholder="结束日期" />
+          </div>
           <button className="btn-confirm" onClick={handleAdd}>创建</button>
         </div>
       )}

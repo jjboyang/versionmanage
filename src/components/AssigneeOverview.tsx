@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import type { Task, TaskStatus } from '../types'
-import { getVersions, getTasks, getAssignees } from '../store'
+import type { Task, TaskStatus, Priority } from '../types'
+import { getVersions, getTasks, getAssignees, getProjects, updateTask, addAssignee, addProject } from '../store'
+import TaskCardItem from './TaskCardItem'
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
   '未开始': 's-todo',
@@ -9,17 +10,24 @@ const STATUS_CLASS: Record<TaskStatus, string> = {
   '已暂停': 's-paused',
 }
 
+const STATUS_OPTIONS: TaskStatus[] = ['未开始', '进行中', '已完成', '已暂停']
+const PRIORITY_OPTIONS: Priority[] = ['P0', 'P1', 'P2', 'P3']
+
 type Mode = 'overview' | 'todo'
 
 export default function AssigneeOverview() {
   const versions = getVersions()
   const allTasks = getTasks()
   const assignees = getAssignees()
+  const projects = getProjects()
 
   const [selectedAssignee, setSelectedAssignee] = useState('')
   const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>([])
   const [statusFilter, setStatusFilter] = useState('')
   const [mode, setMode] = useState<Mode>('overview')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [form, setForm] = useState<Omit<Task, 'id' | 'createdAt'> | null>(null)
 
   // Build version map for quick lookup
   const versionMap = useMemo(() => {
@@ -39,6 +47,17 @@ export default function AssigneeOverview() {
     return map
   }, [allTasks])
 
+  const childrenMap = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    for (const t of allTasks) {
+      if (!t.parentId) continue
+      const list = map.get(t.parentId) || []
+      list.push(t)
+      map.set(t.parentId, list)
+    }
+    return map
+  }, [allTasks])
+
   // All assignees' tasks (matching assignee, optionally filtered by version/status)
   const matchedTasks = useMemo(() => {
     let tasks = allTasks.filter((t) => t.assignee === selectedAssignee)
@@ -54,6 +73,20 @@ export default function AssigneeOverview() {
     return tasks
   }, [allTasks, selectedAssignee, selectedVersionIds, statusFilter, mode])
 
+  const rollupTasks = useMemo(() => {
+    const matchedIds = new Set(matchedTasks.map((t) => t.id))
+    const taskMap = new Map(allTasks.map((t) => [t.id, t]))
+
+    return matchedTasks.filter((task) => {
+      let parentId = task.parentId
+      while (parentId) {
+        if (matchedIds.has(parentId)) return false
+        parentId = taskMap.get(parentId)?.parentId
+      }
+      return true
+    })
+  }, [allTasks, matchedTasks])
+
   // Group by version
   const groupedByVersion = useMemo(() => {
     const map = new Map<string, Task[]>()
@@ -68,13 +101,13 @@ export default function AssigneeOverview() {
 
   // Stats
   const stats = useMemo(() => {
-    const total = matchedTasks.length
-    const done = matchedTasks.filter((t) => t.status === '已完成').length
-    const inProgress = matchedTasks.filter((t) => t.status === '进行中').length
-    const estimated = matchedTasks.reduce((s, t) => s + t.estimatedHours, 0)
-    const actual = matchedTasks.reduce((s, t) => s + t.actualHours, 0)
+    const total = rollupTasks.length
+    const done = rollupTasks.filter((t) => t.status === '已完成').length
+    const inProgress = rollupTasks.filter((t) => t.status === '进行中').length
+    const estimated = rollupTasks.reduce((s, t) => s + t.estimatedHours, 0)
+    const actual = rollupTasks.reduce((s, t) => s + t.actualHours, 0)
     return { total, done, inProgress, estimated, actual }
-  }, [matchedTasks])
+  }, [rollupTasks])
 
   // Version options for filter: only show versions that have tasks for this assignee
   const relevantVersions = useMemo(() => {
@@ -96,6 +129,43 @@ export default function AssigneeOverview() {
     setSelectedVersionIds(relevantVersions.map((v) => v.id))
   }
   const deselectAllVersions = () => setSelectedVersionIds([])
+
+  const openEdit = (task: Task) => {
+    setEditingId(task.id)
+    setForm({
+      versionId: task.versionId,
+      parentId: task.parentId,
+      name: task.name,
+      assignee: task.assignee,
+      startDate: task.startDate,
+      completedDate: task.completedDate,
+      estimatedHours: task.estimatedHours,
+      actualHours: task.actualHours,
+      status: task.status,
+      project: task.project,
+      priority: task.priority,
+    })
+  }
+
+  const closeEdit = () => {
+    setEditingId(null)
+    setForm(null)
+  }
+
+  const saveEdit = () => {
+    if (!editingId || !form || !form.name.trim()) return
+    if (form.status === '已完成' && form.actualHours === 0) {
+      alert('请先填写实际工时后再标记为已完成')
+      return
+    }
+    updateTask(editingId, { ...form, name: form.name.trim() })
+    if (form.assignee && !assignees.includes(form.assignee)) addAssignee(form.assignee)
+    if (form.project && !projects.includes(form.project)) addProject(form.project)
+    closeEdit()
+  }
+
+  const editingTask = editingId ? allTasks.find((t) => t.id === editingId) : undefined
+  const editingHasChildren = editingTask ? childrenMap.has(editingTask.id) : false
 
   return (
     <div className="overview-panel">
@@ -122,6 +192,7 @@ export default function AssigneeOverview() {
         <div className="selector-row">
           <label>选择负责人：</label>
           <select
+            className="field-select"
             value={selectedAssignee}
             onChange={(e) => { setSelectedAssignee(e.target.value); setSelectedVersionIds([]) }}
           >
@@ -153,7 +224,7 @@ export default function AssigneeOverview() {
         {mode === 'overview' && (
           <div className="selector-row">
             <label>任务状态：</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <select className="field-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">全部</option>
               <option value="未开始">未开始</option>
               <option value="进行中">进行中</option>
@@ -163,9 +234,9 @@ export default function AssigneeOverview() {
           </div>
         )}
         {mode === 'todo' && (
-          <div className="selector-row">
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              当前显示：<strong style={{ color: '#2563eb' }}>进行中</strong> 的任务
+          <div className="selector-row selector-hint">
+            <span>
+              当前显示：<strong>进行中</strong> 的任务
             </span>
           </div>
         )}
@@ -194,72 +265,69 @@ export default function AssigneeOverview() {
             <div className="summary-label">完成率</div>
           </div>
           <div className="summary-card">
-            <div className="summary-value">{stats.estimated}h</div>
+            <div className="summary-value">{stats.estimated}d</div>
             <div className="summary-label">预估总工时</div>
           </div>
           <div className="summary-card">
-            <div className="summary-value">{stats.actual}h</div>
+            <div className="summary-value">{stats.actual}d</div>
             <div className="summary-label">实际总工时</div>
           </div>
         </div>
       )}
 
-      {/* Task list grouped by version */}
+      {/* Task list grouped by version with tree view */}
       {selectedAssignee && matchedTasks.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, overflow: 'auto' }}>
+        <div className="assignee-version-groups">
           {groupedByVersion.map(([vName, tasks]) => {
-            const vEstimated = tasks.reduce((s, t) => s + t.estimatedHours, 0)
-            const vActual = tasks.reduce((s, t) => s + t.actualHours, 0)
-            const vDone = tasks.filter((t) => t.status === '已完成').length
-            const vInProgress = tasks.filter((t) => t.status === '进行中').length
+            const taskIds = new Set(tasks.map((t) => t.id))
+            const taskMap = new Map(tasks.map((t) => [t.id, t]))
+            const versionRollupTasks = rollupTasks.filter((t) => taskIds.has(t.id))
+            const vEstimated = versionRollupTasks.reduce((s, t) => s + t.estimatedHours, 0)
+            const vActual = versionRollupTasks.reduce((s, t) => s + t.actualHours, 0)
+            const vDone = versionRollupTasks.filter((t) => t.status === '已完成').length
+            const vInProgress = versionRollupTasks.filter((t) => t.status === '进行中').length
+
+            // Build flat tree rows for this version
+            const topTasks = tasks.filter((t) => !t.parentId || !taskMap.has(t.parentId))
+            const flatRows: { task: Task; depth: number; hasChildren: boolean }[] = []
+            function walk(task: Task, depth: number) {
+              const children = tasks.filter((t) => t.parentId === task.id)
+              const hasChildren = children.length > 0
+              flatRows.push({ task, depth, hasChildren })
+              if (hasChildren && expandedIds.has(task.id)) {
+                for (const child of children) walk(child, depth + 1)
+              }
+            }
+            for (const t of topTasks) walk(t, 0)
+
             return (
-              <div key={vName} className="task-table-wrap" style={{ flex: 'none', maxHeight: 'none' }}>
-                <div style={{ padding: '10px 16px', background: '#fafafa', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 600 }}>📋 {vName}</h3>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    {tasks.length} 个任务 | 预估 {vEstimated}h | 实际 {vActual}h
-                    {mode === 'overview' ? ` | 完成 ${vDone}/${tasks.length}` : ` | 进行中 ${vInProgress}`}
+              <div key={vName} className="task-table-wrap task-card-list-wrap assignee-task-block">
+                <div className="version-block-header">
+                  <h3>📋 {vName}</h3>
+                  <span className="version-block-meta">
+                    {versionRollupTasks.length} 个统计任务 | 预估 {vEstimated}d | 实际 {vActual}d
+                    {mode === 'overview' ? ` | 完成 ${vDone}/${versionRollupTasks.length}` : ` | 进行中 ${vInProgress}`}
                   </span>
                 </div>
-                <table className="task-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '22%' }}>任务名称</th>
-                      <th>父任务</th>
-                      <th>开始时间</th>
-                      <th>完成日期</th>
-                      <th>预估(h)</th>
-                      <th>实际(h)</th>
-                      <th>状态</th>
-                      <th>优先级</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tasks.map((t) => {
-                      const parent = parentMap.get(t.id)
-                      return (
-                        <tr key={t.id}>
-                          <td className="td-name">{t.name}</td>
-                          <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            {parent ? parent.name : (t.parentId ? '—' : '（顶层）')}
-                          </td>
-                          <td>{t.startDate}</td>
-                          <td style={{ fontSize: '12px' }}>{t.completedDate || '—'}</td>
-                          <td className="td-num">{t.estimatedHours}</td>
-                          <td className="td-num">{t.actualHours}</td>
-                          <td>
-                            <span className={`status-select ${STATUS_CLASS[t.status]}`} style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px' }}>
-                              {t.status}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`priority-tag pri-${t.priority.toLowerCase()}`}>{t.priority}</span>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                <div className="task-card-list">
+                  {flatRows.map(({ task: t, depth, hasChildren }) => (
+                    <TaskCardItem
+                      key={t.id}
+                      task={t}
+                      depth={depth}
+                      hasChildren={hasChildren}
+                      expanded={expandedIds.has(t.id)}
+                      readOnlyStatus
+                      onToggleExpand={hasChildren ? () => setExpandedIds((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(t.id)) next.delete(t.id)
+                        else next.add(t.id)
+                        return next
+                      }) : undefined}
+                      onEdit={() => openEdit(t)}
+                    />
+                  ))}
+                </div>
               </div>
             )
           })}
@@ -273,6 +341,137 @@ export default function AssigneeOverview() {
       )}
       {!selectedAssignee && (
         <div className="empty-hint overview-empty">请选择负责人以查看任务</div>
+      )}
+
+      {form && (
+        <div className="modal-overlay" onClick={closeEdit}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>编辑任务</h3>
+              <button className="btn-close" onClick={closeEdit}>×</button>
+            </div>
+            <div className="modal-body">
+              {form.parentId && (
+                <div className="form-row">
+                  <label>父任务</label>
+                  <input value={parentMap.get(editingId || '')?.name || ''} disabled />
+                </div>
+              )}
+
+              <div className="form-row">
+                <label>任务名称 *</label>
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="输入任务名称"
+                />
+              </div>
+
+              <div className="form-row form-row-3">
+                <div className="form-col">
+                  <label>负责人</label>
+                  <input
+                    value={form.assignee}
+                    onChange={(e) => setForm({ ...form, assignee: e.target.value })}
+                    placeholder="输入或选择"
+                    list="assignee-overview-list"
+                  />
+                  <datalist id="assignee-overview-list">
+                    {assignees.map((a) => <option key={a} value={a} />)}
+                  </datalist>
+                </div>
+                <div className="form-col">
+                  <label>项目</label>
+                  <input
+                    value={form.project}
+                    onChange={(e) => setForm({ ...form, project: e.target.value })}
+                    placeholder="输入或选择"
+                    list="project-overview-list"
+                  />
+                  <datalist id="project-overview-list">
+                    {projects.map((p) => <option key={p} value={p} />)}
+                  </datalist>
+                </div>
+                <div className="form-col">
+                  <label>开始时间</label>
+                  <input
+                    type="date"
+                    value={form.startDate}
+                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row form-row-3">
+                <div className="form-col">
+                  <label>预估工时 (d){editingHasChildren ? ' [自动]' : ''}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={form.estimatedHours}
+                    onChange={(e) => setForm({ ...form, estimatedHours: +e.target.value })}
+                    disabled={editingHasChildren}
+                    title={editingHasChildren ? '有子任务时工时自动累加' : ''}
+                  />
+                </div>
+                <div className="form-col">
+                  <label>实际工时 (d){editingHasChildren ? ' [自动]' : ''}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={form.actualHours}
+                    onChange={(e) => setForm({ ...form, actualHours: +e.target.value })}
+                    disabled={editingHasChildren}
+                    title={editingHasChildren ? '有子任务时工时自动累加' : ''}
+                  />
+                </div>
+                <div className="form-col">
+                  <label>优先级</label>
+                  <select
+                    className="field-select"
+                    value={form.priority}
+                    onChange={(e) => setForm({ ...form, priority: e.target.value as Priority })}
+                  >
+                    {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <label>状态</label>
+                <div className="status-radio-group">
+                  {STATUS_OPTIONS.map((s) => (
+                    <label key={s} className={`status-radio ${STATUS_CLASS[s]} ${form.status === s ? 'active' : ''}`}>
+                      <input
+                        type="radio"
+                        name="assignee-status"
+                        value={s}
+                        checked={form.status === s}
+                        onChange={() => setForm({ ...form, status: s })}
+                      />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <label>完成日期</label>
+                <input
+                  type="date"
+                  value={form.completedDate || ''}
+                  onChange={(e) => setForm({ ...form, completedDate: e.target.value || undefined })}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={closeEdit}>取消</button>
+              <button className="btn-confirm" onClick={saveEdit}>保存</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

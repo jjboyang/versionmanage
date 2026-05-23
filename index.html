@@ -3,7 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1e40af" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/theme-furina-bg.png" as="image" />
     <title>版本任务管理系统</title>
+    <script>
+      try {
+        var t = localStorage.getItem('vtm_theme');
+        document.documentElement.setAttribute('data-theme', t === 'regal' ? 'regal' : 'default');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'default');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

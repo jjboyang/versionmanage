@@ -1,14 +1,29 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { getVersions, getVersionGroups, getTasks } from '../store'
+
+const SELECTED_VERSIONS_KEY = 'vtm_overview_selected_versions'
+const STATUS_FILTER_KEY = 'vtm_overview_status_filter'
+const COLLAPSED_GROUPS_KEY = 'vtm_overview_collapsed_groups'
+
+function loadStoredArray(key: string): string[] {
+  try {
+    const value = localStorage.getItem(key)
+    return value ? JSON.parse(value) : []
+  } catch {
+    return []
+  }
+}
 
 export default function Overview() {
   const versions = getVersions()
   const groups = getVersionGroups()
   const allTasks = getTasks()
 
-  const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>([])
-  const [statusFilter, setStatusFilter] = useState('')
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>(() => loadStoredArray(SELECTED_VERSIONS_KEY))
+  const [statusFilter, setStatusFilter] = useState(() => localStorage.getItem(STATUS_FILTER_KEY) || '')
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set(loadStoredArray(COLLAPSED_GROUPS_KEY))
+  )
 
   // group versions
   const grouped = useMemo(() => {
@@ -22,6 +37,26 @@ export default function Overview() {
   }, [versions, groups])
 
   const selectedSet = new Set(selectedVersionIds)
+
+  useEffect(() => {
+    const validIds = new Set(versions.map((v) => v.id))
+    setSelectedVersionIds((prev) => {
+      const next = prev.filter((id) => validIds.has(id))
+      return next.length === prev.length ? prev : next
+    })
+  }, [versions])
+
+  useEffect(() => {
+    localStorage.setItem(SELECTED_VERSIONS_KEY, JSON.stringify(selectedVersionIds))
+  }, [selectedVersionIds])
+
+  useEffect(() => {
+    localStorage.setItem(STATUS_FILTER_KEY, statusFilter)
+  }, [statusFilter])
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify([...collapsedGroups]))
+  }, [collapsedGroups])
 
   const toggleVersion = (id: string) => {
     setSelectedVersionIds((prev) =>
@@ -156,7 +191,7 @@ export default function Overview() {
 
         <div className="selector-row">
           <label>任务状态：</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select className="field-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">全部</option>
             <option value="未开始">未开始</option>
             <option value="进行中">进行中</option>
@@ -174,11 +209,11 @@ export default function Overview() {
             <div className="summary-label">任务总数</div>
           </div>
           <div className="summary-card">
-            <div className="summary-value">{totals.estimated}h</div>
+            <div className="summary-value">{totals.estimated}d</div>
             <div className="summary-label">预估总工时</div>
           </div>
           <div className="summary-card">
-            <div className="summary-value">{totals.actual}h</div>
+            <div className="summary-value">{totals.actual}d</div>
             <div className="summary-label">实际总工时</div>
           </div>
           <div className="summary-card">
@@ -196,14 +231,23 @@ export default function Overview() {
       {memberStats.length > 0 && (
         <div className="overview-table-wrap">
           <table className="overview-table">
+            <colgroup>
+              <col className="col-member" />
+              <col className="col-number" />
+              <col className="col-number" />
+              <col className="col-rate" />
+              <col className="col-hours" />
+              <col className="col-hours" />
+              <col className="col-hours" />
+            </colgroup>
             <thead>
               <tr>
                 <th>成员</th>
                 <th>任务数</th>
                 <th>已完成</th>
                 <th>完成率</th>
-                <th>预估工时 (h)</th>
-                <th>实际工时 (h)</th>
+                <th>预估工时 (d)</th>
+                <th>实际工时 (d)</th>
                 <th>工时偏差</th>
               </tr>
             </thead>

@@ -1,4 +1,7 @@
+import { fetchSnapshot, importSnapshot } from './api'
+
 const LAST_BACKUP_KEY = 'vtm_last_backup'
+const DATA_CHANGED_EVENT = 'vtm:data-changed'
 const DB_NAME = 'vtm-backup-db'
 const DB_STORE = 'handles'
 const DIR_HANDLE_KEY = 'backup-dir'
@@ -87,7 +90,7 @@ export async function autoBackup(): Promise<boolean> {
     if (!handle) return false
     if (!(await verifyPermission(handle))) return false
 
-    const backup = exportBackupData()
+    const backup = await exportBackupData()
     const date = new Date().toISOString().slice(0, 10)
     const filename = `backup-${date}.json`
 
@@ -105,8 +108,8 @@ export async function autoBackup(): Promise<boolean> {
 
 // ---- Manual download fallback ----
 
-export function downloadBackup() {
-  const backup = exportBackupData()
+export async function downloadBackup() {
+  const backup = await exportBackupData()
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -122,27 +125,50 @@ export function downloadBackup() {
 
 // ---- Data export/import ----
 
-function exportBackupData(): BackupData {
-  const data: Record<string, unknown> = {}
-  for (const key of STORAGE_KEYS) {
-    const raw = localStorage.getItem(key)
-    data[key] = raw ? JSON.parse(raw) : null
+async function exportBackupData(): Promise<BackupData> {
+  // Try server snapshot first for up-to-date data
+  try {
+    const snapshot = await fetchSnapshot()
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: {
+        [STORAGE_KEYS[0]]: snapshot.versions,
+        [STORAGE_KEYS[1]]: snapshot.tasks,
+        [STORAGE_KEYS[2]]: snapshot.assignees,
+        [STORAGE_KEYS[3]]: snapshot.projects,
+      },
+    }
+  } catch {
+    // Fallback to localStorage cache
+    const data: Record<string, unknown> = {}
+    for (const key of STORAGE_KEYS) {
+      const raw = localStorage.getItem(key)
+      data[key] = raw ? JSON.parse(raw) : null
+    }
+    return { version: 1, exportedAt: new Date().toISOString(), data }
   }
-  return { version: 1, exportedAt: new Date().toISOString(), data }
 }
 
 export function importBackup(file: File): Promise<boolean> {
   return new Promise((resolve) => {
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const backup: BackupData = JSON.parse(reader.result as string)
         if (!backup.version || !backup.data) throw new Error('无效的备份文件')
+        await importSnapshot({
+          versions: Array.isArray(backup.data.vtm_versions) ? backup.data.vtm_versions : [],
+          tasks: Array.isArray(backup.data.vtm_tasks) ? backup.data.vtm_tasks : [],
+          assignees: Array.isArray(backup.data.vtm_assignees) ? backup.data.vtm_assignees : [],
+          projects: Array.isArray(backup.data.vtm_projects) ? backup.data.vtm_projects : [],
+        })
         for (const key of STORAGE_KEYS) {
           if (backup.data[key] != null) {
             localStorage.setItem(key, JSON.stringify(backup.data[key]))
           }
         }
+        window.dispatchEvent(new CustomEvent(DATA_CHANGED_EVENT, { detail: { key: 'backup-import' } }))
         resolve(true)
       } catch {
         resolve(false)

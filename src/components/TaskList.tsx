@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { Task, TaskStatus, Priority } from '../types'
 import { getTasks, addTask, updateTask, deleteTask, getAssignees, addAssignee, getProjects, addProject } from '../store'
+import TaskCardItem from './TaskCardItem'
 
 interface Props {
   versionId: string
@@ -178,6 +179,10 @@ export default function TaskList({ versionId }: Props) {
 
   const handleSubmit = () => {
     if (!form.name.trim()) return
+    if (form.status === '已完成' && form.actualHours === 0) {
+      alert('请先填写实际工时后再标记为已完成')
+      return
+    }
     if (editingId) {
       updateTask(editingId, form)
     } else {
@@ -203,6 +208,12 @@ export default function TaskList({ versionId }: Props) {
 
   const handleStatusChange = (taskId: string, status: TaskStatus) => {
     if (status === '已完成') {
+      const task = allTasks.find((t) => t.id === taskId)
+      if (task && task.actualHours === 0) {
+        alert('请先填写实际工时后再标记为已完成')
+        _r(Math.random())
+        return
+      }
       setCompleteTarget({ taskId })
       setCompleteDate(new Date().toISOString().slice(0, 10))
       return
@@ -235,8 +246,8 @@ export default function TaskList({ versionId }: Props) {
 
       {/* Stats bar */}
       <div className="stats-bar">
-        <span>预估工时: <strong>{totalEstimated}h</strong></span>
-        <span>实际工时: <strong>{totalActual}h</strong></span>
+        <span>预估工时: <strong>{totalEstimated}d</strong></span>
+        <span>实际工时: <strong>{totalActual}d</strong></span>
         <span>完成: <strong>{doneCount}/{leafTasks.length}</strong></span>
         {leafTasks.length > 0 && (
           <span>完成率: <strong>{Math.round((doneCount / leafTasks.length) * 100)}%</strong></span>
@@ -250,19 +261,19 @@ export default function TaskList({ versionId }: Props) {
           value={searchName}
           onChange={(e) => setSearchName(e.target.value)}
         />
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as TaskStatus | '')}>
+        <select className="field-select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as TaskStatus | '')}>
           <option value="">全部状态</option>
           {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as Priority | '')}>
+        <select className="field-select" value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as Priority | '')}>
           <option value="">全部优先级</option>
           {PRIORITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
+        <select className="field-select" value={filterAssignee} onChange={(e) => setFilterAssignee(e.target.value)}>
           <option value="">全部负责人</option>
           {assignees.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-        <select value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
+        <select className="field-select" value={filterProject} onChange={(e) => setFilterProject(e.target.value)}>
           <option value="">全部项目</option>
           {projects.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
@@ -271,78 +282,27 @@ export default function TaskList({ versionId }: Props) {
         }}>重置</button>
       </div>
 
-      {/* Task table */}
-      <div className="task-table-wrap">
-        <table className="task-table">
-          <thead>
-            <tr>
-              <th style={{ width: '22%' }}>任务名称</th>
-              <th>负责人</th>
-              <th>开始时间</th>
-              <th>预估(h)</th>
-              <th>实际(h)</th>
-              <th>状态</th>
-              <th>项目</th>
-              <th>优先级</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {flatRows.map(({ task, depth, hasChildren }) => {
-              const isParent = hasChildren
-              return (
-                <tr key={task.id} className={`task-row ${depth > 0 ? 'sub-task' : ''} ${isParent ? 'parent-task' : ''}`}>
-                  <td className="td-name" style={{ paddingLeft: 12 + depth * 20 }}>
-                    {isParent ? (
-                      <span
-                        className="expand-toggle"
-                        onClick={() => toggleExpand(task.id)}
-                      >
-                        {expandedIds.has(task.id) ? '▼' : '▶'}
-                      </span>
-                    ) : depth > 0 ? (
-                      <span className="sub-indent" />
-                    ) : null}
-                    {task.name}
-                  </td>
-                  <td>{task.assignee}</td>
-                  <td>{task.startDate}</td>
-                  <td className={`td-num ${isParent ? 'td-auto' : ''}`} title={isParent ? '子任务工时合计' : ''}>
-                    {isParent && <span className="auto-icon">Σ </span>}
-                    {task.estimatedHours}
-                  </td>
-                  <td className={`td-num ${isParent ? 'td-auto' : ''}`} title={isParent ? '子任务工时合计' : ''}>
-                    {isParent && <span className="auto-icon">Σ </span>}
-                    {task.actualHours}
-                  </td>
-                  <td>
-                    <select
-                      className={`status-select ${STATUS_CLASS[task.status]}`}
-                      value={task.status}
-                      onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
-                    >
-                      {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td>{task.project}</td>
-                  <td>
-                    <span className={`priority-tag pri-${task.priority.toLowerCase()}`}>{task.priority}</span>
-                  </td>
-                  <td className="td-actions">
-                    <button className="btn-edit" onClick={() => openForm(task)}>编辑</button>
-                    <button className="btn-sub" onClick={() => openForm(task, true)}>+子任务</button>
-                    <button className="btn-del" onClick={() => handleDelete(task.id)}>删除</button>
-                  </td>
-                </tr>
-              )
-            })}
-            {flatRows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="empty-hint">暂无任务</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Task cards */}
+      <div className="task-table-wrap task-card-list-wrap">
+        <div className="task-card-list">
+          {flatRows.map(({ task, depth, hasChildren }) => (
+            <TaskCardItem
+              key={task.id}
+              task={task}
+              depth={depth}
+              hasChildren={hasChildren}
+              expanded={expandedIds.has(task.id)}
+              onToggleExpand={hasChildren ? () => toggleExpand(task.id) : undefined}
+              onStatusChange={(status) => handleStatusChange(task.id, status)}
+              onEdit={() => openForm(task)}
+              onAddSub={() => openForm(task, true)}
+              onDelete={() => handleDelete(task.id)}
+            />
+          ))}
+          {flatRows.length === 0 && (
+            <div className="empty-hint task-card-empty">暂无任务</div>
+          )}
+        </div>
       </div>
 
       {/* Task Form Modal */}
@@ -411,7 +371,7 @@ export default function TaskList({ versionId }: Props) {
 
               <div className="form-row form-row-3">
                 <div className="form-col">
-                  <label>预估工时 (h){editingHasChildren ? ' [自动]' : ''}</label>
+                  <label>预估工时 (d){editingHasChildren ? ' [自动]' : ''}</label>
                   <input
                     type="number"
                     min="0"
@@ -423,7 +383,7 @@ export default function TaskList({ versionId }: Props) {
                   />
                 </div>
                 <div className="form-col">
-                  <label>实际工时 (h){editingHasChildren ? ' [自动]' : ''}</label>
+                  <label>实际工时 (d){editingHasChildren ? ' [自动]' : ''}</label>
                   <input
                     type="number"
                     min="0"
@@ -437,6 +397,7 @@ export default function TaskList({ versionId }: Props) {
                 <div className="form-col">
                   <label>优先级</label>
                   <select
+                    className="field-select"
                     value={form.priority}
                     onChange={(e) => setForm({ ...form, priority: e.target.value as Priority })}
                   >

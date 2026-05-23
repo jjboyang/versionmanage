@@ -1,10 +1,14 @@
 export type TaskStatus = '未开始' | '进行中' | '已完成' | '已暂停'
+export type VersionStatus = TaskStatus
 export type Priority = 'P0' | 'P1' | 'P2' | 'P3'
 
 export interface Version {
   id: string
   name: string
   group: string
+  status: VersionStatus
+  startDate: string
+  endDate: string
   createdAt: string
 }
 
