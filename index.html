@@ -6,13 +6,15 @@
     <meta name="theme-color" content="#1e40af" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@700;800&family=M+PLUS+Rounded+1c:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
     <link rel="preload" href="/theme-furina-bg.png" as="image" />
+    <link rel="preload" href="/theme-stellar-bg.png" as="image" />
     <title>版本任务管理系统</title>
     <script>
       try {
         var t = localStorage.getItem('vtm_theme');
-        document.documentElement.setAttribute('data-theme', t === 'regal' ? 'regal' : 'default');
+        if (t === 'regal' || t === 'stellar') document.documentElement.setAttribute('data-theme', t);
+        else document.documentElement.setAttribute('data-theme', 'default');
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'default');
       }

@@ -259,15 +259,7 @@ export default function Overview() {
                     <td className="td-member">{m.name}</td>
                     <td className="td-num">{m.count}</td>
                     <td className="td-num">{m.done}</td>
-                    <td className="td-num">
-                      <div className="completion-bar">
-                        <div
-                          className="completion-fill"
-                          style={{ width: `${m.count > 0 ? Math.round((m.done / m.count) * 100) : 0}%` }}
-                        />
-                        <span>{m.count > 0 ? Math.round((m.done / m.count) * 100) : 0}%</span>
-                      </div>
-                    </td>
+                    <td className="td-num">{m.count > 0 ? Math.round((m.done / m.count) * 100) : 0}%</td>
                     <td className="td-num">{m.estimated}</td>
                     <td className="td-num">{m.actual}</td>
                     <td className={`td-num ${deviation > 0 ? 'deviation-over' : deviation < 0 ? 'deviation-under' : ''}`}>

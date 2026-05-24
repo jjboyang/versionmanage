@@ -6,8 +6,8 @@
     #e8edf5;
   --surface: #f8fafc;
   --white: #fff;
-  --border: #d8e2f0;
-  --border-strong: #b8c8dc;
+  --border: #d0daea;
+  --border-strong: #a8b8d0;
   --text: #0f172a;
   --text-secondary: #5b6b82;
   --primary: #2563eb;
@@ -74,11 +74,11 @@
 /* ===== Regal / Furina theme ===== */
 [data-theme="regal"] {
   --bg: #0a101f;
-  --bg-accent: #0a101f;
-  --surface: rgba(20, 27, 45, 0.28);
-  --white: rgba(15, 23, 42, 0.32);
-  --border: rgba(197, 160, 89, 0.32);
-  --border-strong: rgba(197, 160, 89, 0.5);
+  --bg-accent: transparent;
+  --surface: rgba(15, 23, 42, 0.22);
+  --white: rgba(15, 23, 42, 0.2);
+  --border: rgba(255, 255, 255, 0.11);
+  --border-strong: rgba(197, 160, 89, 0.38);
   --text: #e8edf5;
   --text-secondary: #a8b8cc;
   --primary: #50e3ff;
@@ -94,13 +94,13 @@
   --shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.25);
   --shadow-header: 0 1px 0 rgba(197, 160, 89, 0.12);
-  --header-bg: rgba(10, 16, 31, 0.38);
-  --nav-bg: rgba(15, 23, 42, 0.32);
+  --header-bg: rgba(10, 16, 31, 0.4);
+  --nav-bg: rgba(15, 23, 42, 0.28);
   --nav-tab-hover: rgba(80, 227, 255, 0.08);
-  --nav-tab-active-bg: rgba(20, 27, 45, 0.45);
-  --sidebar-bg: rgba(10, 16, 31, 0.32);
-  --panel-header-bg: linear-gradient(180deg, rgba(10, 16, 31, 0.55) 60%, transparent);
-  --glass-blur: 8px;
+  --nav-tab-active-bg: rgba(20, 27, 45, 0.38);
+  --sidebar-bg: rgba(10, 16, 31, 0.28);
+  --panel-header-bg: linear-gradient(180deg, rgba(10, 16, 31, 0.45) 60%, transparent);
+  --glass-blur: 12px;
   --overlay-bg: rgba(5, 8, 18, 0.55);
   --scrollbar-thumb: rgba(197, 160, 89, 0.35);
   --scrollbar-thumb-hover: rgba(80, 227, 255, 0.45);
@@ -172,9 +172,9 @@
   z-index: -1;
   background: linear-gradient(
     165deg,
-    rgba(10, 16, 31, 0.18) 0%,
-    rgba(20, 27, 45, 0.28) 50%,
-    rgba(10, 16, 31, 0.32) 100%
+    rgba(10, 16, 31, 0.08) 0%,
+    rgba(20, 27, 45, 0.12) 50%,
+    rgba(10, 16, 31, 0.16) 100%
   );
   pointer-events: none;
 }
@@ -183,7 +183,7 @@
 [data-theme="regal"] body {
   color-scheme: dark;
   font-family: var(--font-body);
-  background: var(--bg);
+  background: transparent;
   letter-spacing: 0.02em;
 }
 
@@ -246,7 +246,10 @@
   .expand-toggle,
   .td-actions .btn-edit,
   .td-actions .btn-sub,
-  .td-actions .btn-del
+  .td-actions .btn-del,
+  .task-card-actions .btn-edit,
+  .task-card-actions .btn-sub,
+  .task-card-actions .btn-del
 ) {
   font-family: var(--font-heading);
   letter-spacing: 0.04em;
@@ -309,6 +312,9 @@
 
 [data-theme="regal"] .nav-tab.active {
   color: var(--primary);
+}
+
+[data-theme="regal"] .nav-slider {
   box-shadow: var(--shadow-soft), 0 0 12px rgba(80, 227, 255, 0.2), inset 0 0 0 1px rgba(197, 160, 89, 0.25);
 }
 
@@ -616,12 +622,6 @@
   .theme-switch-btn { flex: 1; }
 }
 
-[data-theme="regal"] .version-block-header {
-  background: var(--table-head-bg);
-  border-bottom: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 rgba(197, 160, 89, 0.12);
-}
-
 [data-theme="regal"] .version-block-header h3 {
   color: var(--gold);
 }
@@ -640,9 +640,10 @@
   display: inline-flex;
   padding: 3px;
   gap: 2px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--border-strong);
   background: var(--nav-bg);
+  box-shadow: var(--panel-edge);
 }
 .theme-switch-btn {
   border: none;
@@ -668,4 +669,9 @@
 [data-theme="regal"] .theme-switch-btn.active {
   color: var(--primary);
   box-shadow: var(--shadow-soft), 0 0 10px rgba(80, 227, 255, 0.2);
+}
+
+[data-theme="stellar"] .theme-switch-btn.active {
+  color: var(--primary);
+  box-shadow: var(--shadow-soft), 0 0 10px rgba(255, 110, 180, 0.25);
 }

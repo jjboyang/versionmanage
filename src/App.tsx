@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import AppNav, { type AppTab } from './components/AppNav'
 import VersionList from './components/VersionList'
 import TaskList from './components/TaskList'
 import Overview from './components/Overview'
@@ -16,12 +17,10 @@ import {
 import { getVersions, subscribeToDataChanges, syncFromServer, DATA_CHANGED_EVENT } from './store'
 import { applyTheme, getStoredTheme, THEMES, type ThemeId } from './theme'
 
-type Tab = 'tasks' | 'overview' | 'assignee' | 'audit'
-
 export default function App() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [tab, setTab] = useState<Tab>('tasks')
+  const [tab, setTab] = useState<AppTab>('tasks')
   const [folderReady, setFolderReady] = useState(false)
   const [folderChecking, setFolderChecking] = useState(true)
   const [restoreMsg, setRestoreMsg] = useState<string | null>(null)
@@ -139,44 +138,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>版本任务管理系统</h1>
-        <nav className="app-nav" role="tablist" aria-label="主导航">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'tasks'}
-            className={`nav-tab ${tab === 'tasks' ? 'active' : ''}`}
-            onClick={() => setTab('tasks')}
-          >
-            任务管理
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'overview'}
-            className={`nav-tab ${tab === 'overview' ? 'active' : ''}`}
-            onClick={() => setTab('overview')}
-          >
-            总览看板
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'assignee'}
-            className={`nav-tab ${tab === 'assignee' ? 'active' : ''}`}
-            onClick={() => setTab('assignee')}
-          >
-            负责人看板
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'audit'}
-            className={`nav-tab ${tab === 'audit' ? 'active' : ''}`}
-            onClick={() => setTab('audit')}
-          >
-            系统记录
-          </button>
-        </nav>
+        <AppNav tab={tab} onChange={setTab} />
         <div className="header-actions">
           <div className="theme-switch" role="group" aria-label="界面主题">
             {THEMES.map((item) => (

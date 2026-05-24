@@ -1,0 +1,150 @@
+/* ===== Immersive illustration themes (regal + stellar)
+ * design-md: neutral glass chrome over full-bleed art; accents on interaction only */
+
+[data-theme="regal"],
+[data-theme="stellar"] {
+  --glass-blur: 12px;
+  --glass-saturate: 1.35;
+  --bg-accent: transparent;
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="regal"] {
+  --glass-bg: rgba(10, 16, 31, 0.4);
+  --glass-bg-soft: rgba(15, 23, 42, 0.28);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-strong: rgba(255, 255, 255, 0.34);
+  --glass-border-accent: rgba(197, 160, 89, 0.45);
+  --border-strong: var(--glass-border-strong);
+}
+
+[data-theme="stellar"] {
+  --glass-bg: rgba(12, 4, 22, 0.38);
+  --glass-bg-soft: rgba(18, 8, 34, 0.26);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-border-strong: rgba(255, 180, 220, 0.4);
+  --glass-border-accent: rgba(0, 229, 255, 0.42);
+  --border-strong: var(--glass-border-strong);
+}
+
+/* 面板统一玻璃层（覆盖 --white 染色） */
+[data-theme="regal"] .sidebar,
+[data-theme="stellar"] .sidebar {
+  background: var(--glass-bg-soft);
+  border-right-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+[data-theme="regal"] .app-header,
+[data-theme="stellar"] .app-header {
+  background: var(--glass-bg);
+  border-bottom-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+[data-theme="regal"] .task-table-wrap,
+[data-theme="stellar"] .task-table-wrap,
+[data-theme="regal"] .filter-bar,
+[data-theme="stellar"] .filter-bar,
+[data-theme="regal"] .stats-bar span,
+[data-theme="stellar"] .stats-bar span,
+[data-theme="regal"] .overview-selector,
+[data-theme="stellar"] .overview-selector,
+[data-theme="regal"] .summary-card,
+[data-theme="stellar"] .summary-card,
+[data-theme="regal"] .overview-table-wrap,
+[data-theme="stellar"] .overview-table-wrap,
+[data-theme="regal"] .version-progress-panel,
+[data-theme="stellar"] .version-progress-panel,
+[data-theme="regal"] .backup-banner,
+[data-theme="stellar"] .backup-banner,
+[data-theme="regal"] .audit-section,
+[data-theme="stellar"] .audit-section,
+[data-theme="regal"] .form-inline,
+[data-theme="stellar"] .form-inline,
+[data-theme="regal"] .empty-state,
+[data-theme="stellar"] .empty-state {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--shadow-soft), var(--panel-edge);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+[data-theme="regal"] .nav-slider,
+[data-theme="stellar"] .nav-slider {
+  border: 1px solid var(--glass-border-accent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="regal"] .version-group-block,
+[data-theme="stellar"] .version-group-block {
+  background: var(--glass-bg-soft);
+  border-color: var(--glass-border);
+}
+
+[data-theme="regal"] .panel-header h2,
+[data-theme="stellar"] .panel-header h2,
+[data-theme="regal"] .version-block-header,
+[data-theme="stellar"] .version-block-header {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--shadow-soft), var(--panel-edge);
+}
+
+[data-theme="regal"] .task-card-inner,
+[data-theme="stellar"] .task-card-inner {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  backdrop-filter: blur(10px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(10px) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow-soft), var(--panel-edge);
+}
+
+[data-theme="regal"] .task-card-sub .task-card-inner,
+[data-theme="stellar"] .task-card-sub .task-card-inner {
+  background: var(--glass-bg-soft);
+}
+
+[data-theme="regal"] .modal,
+[data-theme="stellar"] .modal {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), var(--panel-edge);
+}
+
+[data-theme="regal"] .field-select,
+[data-theme="stellar"] .field-select,
+[data-theme="regal"] .filter-bar input,
+[data-theme="stellar"] .filter-bar input,
+[data-theme="regal"] .form-row input,
+[data-theme="stellar"] .form-row input,
+[data-theme="regal"] .form-col input,
+[data-theme="stellar"] .form-col input,
+[data-theme="regal"] .version-edit-form input,
+[data-theme="stellar"] .version-edit-form input {
+  border-color: var(--glass-border);
+  background-color: var(--glass-bg-soft);
+}
+
+[data-theme="regal"] body,
+[data-theme="stellar"] body {
+  background: transparent;
+}
+
+/* 交互态保留主题色，面板保持中性玻璃 */
+[data-theme="stellar"] .task-card:hover .task-card-inner {
+  border-color: var(--glass-border-accent);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 20px rgba(255, 105, 180, 0.12);
+}
+
+[data-theme="regal"] .task-card:hover .task-card-inner {
+  border-color: var(--glass-border-accent);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 16px rgba(80, 227, 255, 0.1);
+}
