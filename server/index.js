@@ -309,9 +309,6 @@ async function handleApi(req, res) {
         status: body.status || '未开始',
         project: String(body.project || '').trim(),
         priority: body.priority || 'P2',
-      status: body.status || '未开始',
-      startDate: String(body.startDate || ''),
-      endDate: String(body.endDate || ''),
         createdAt: new Date().toISOString(),
       }
       if (!task.name) return sendJson(res, 400, { error: 'Task name required' })
