@@ -1,13 +1,14 @@
-export type ThemeId = 'default' | 'regal' | 'stellar'
+export type ThemeId = 'default' | 'regal' | 'stellar' | 'teatime'
 
 const STORAGE_KEY = 'vtm_theme'
 
-const VALID_THEMES: ThemeId[] = ['default', 'regal', 'stellar']
+const VALID_THEMES: ThemeId[] = ['default', 'regal', 'stellar', 'teatime']
 
 export const THEMES: { id: ThemeId; label: string; description: string }[] = [
   { id: 'default', label: '默认', description: '清爽浅色界面' },
   { id: 'regal', label: '深海剧院', description: '深蓝金调 · 背景插画' },
-  { id: 'stellar', label: '星晶棱镜', description: '粉晶霓虹 · 星芒背景' },
+  { id: 'stellar', label: '星晶棱镜', description: '深空舞台 · 棱镜丝带' },
+  { id: 'teatime', label: '琉璃茶宴', description: '暖胡桃舞台 · 冰晶点缀' },
 ]
 
 export function getStoredTheme(): ThemeId {
@@ -23,7 +24,8 @@ export function getStoredTheme(): ThemeId {
 const META_COLORS: Record<ThemeId, string> = {
   default: '#2563eb',
   regal: '#0a101f',
-  stellar: '#120422',
+  stellar: '#0a1438',
+  teatime: '#0a1628',
 }
 
 export function applyTheme(id: ThemeId) {

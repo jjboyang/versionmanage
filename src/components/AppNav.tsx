@@ -1,12 +1,11 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
-export type AppTab = 'tasks' | 'overview' | 'assignee' | 'audit'
+export type AppTab = 'tasks' | 'overview' | 'assignee'
 
 const TABS: { id: AppTab; label: string }[] = [
   { id: 'tasks', label: '任务管理' },
   { id: 'overview', label: '总览看板' },
   { id: 'assignee', label: '负责人看板' },
-  { id: 'audit', label: '系统记录' },
 ]
 
 interface Props {

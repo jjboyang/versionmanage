@@ -1,8 +1,9 @@
-/* ===== Immersive illustration themes (regal + stellar)
+/* ===== Immersive illustration themes (regal + stellar + teatime)
  * design-md: neutral glass chrome over full-bleed art; accents on interaction only */
 
 [data-theme="regal"],
-[data-theme="stellar"] {
+[data-theme="stellar"],
+[data-theme="teatime"] {
   --glass-blur: 12px;
   --glass-saturate: 1.35;
   --bg-accent: transparent;
@@ -19,15 +20,37 @@
 }
 
 [data-theme="stellar"] {
-  --glass-bg: rgba(12, 4, 22, 0.38);
-  --glass-bg-soft: rgba(18, 8, 34, 0.26);
-  --glass-border: rgba(255, 255, 255, 0.22);
-  --glass-border-strong: rgba(255, 180, 220, 0.4);
-  --glass-border-accent: rgba(0, 229, 255, 0.42);
+  --glass-blur: 22px;
+  --glass-saturate: 1.15;
+  --glass-bg: rgba(10, 18, 48, 0.14);
+  --glass-bg-soft: rgba(12, 22, 58, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-strong: rgba(180, 210, 255, 0.36);
+  --glass-border-accent: rgba(94, 200, 255, 0.48);
   --border-strong: var(--glass-border-strong);
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-/* 面板统一玻璃层（覆盖 --white 染色） */
+[data-theme="teatime"] {
+  --glass-blur: 22px;
+  --glass-saturate: 1.1;
+  /* 统一暖褐玻璃：主面板与嵌套块同族，仅输入/卡片略浅一档 */
+  --teatime-rgb: 32, 24, 18;
+  --glass-panel-a: 0.56;
+  --glass-inset-a: 0.44;
+  --glass-bg: rgba(var(--teatime-rgb), var(--glass-panel-a));
+  --glass-bg-soft: rgba(var(--teatime-rgb), var(--glass-panel-a));
+  --glass-bg-inset: rgba(var(--teatime-rgb), var(--glass-inset-a));
+  --glass-border: rgba(255, 248, 235, 0.16);
+  --glass-border-strong: rgba(201, 162, 39, 0.4);
+  --glass-border-accent: rgba(126, 200, 255, 0.42);
+  --glass-panel-shadow:
+    inset 0 1px 0 rgba(255, 248, 240, 0.14),
+    0 8px 24px rgba(8, 6, 4, 0.28);
+  --border-strong: var(--glass-border-strong);
+  --panel-edge: inset 0 1px 0 rgba(255, 248, 240, 0.14);
+}
+
 [data-theme="regal"] .sidebar,
 [data-theme="stellar"] .sidebar {
   background: var(--glass-bg-soft);
@@ -36,8 +59,16 @@
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
+[data-theme="teatime"] .sidebar {
+  background: var(--glass-bg);
+  border-right-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
 [data-theme="regal"] .app-header,
-[data-theme="stellar"] .app-header {
+[data-theme="stellar"] .app-header,
+[data-theme="teatime"] .app-header {
   background: var(--glass-bg);
   border-bottom-color: var(--glass-border);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -46,26 +77,37 @@
 
 [data-theme="regal"] .task-table-wrap,
 [data-theme="stellar"] .task-table-wrap,
+[data-theme="teatime"] .task-table-wrap,
 [data-theme="regal"] .filter-bar,
 [data-theme="stellar"] .filter-bar,
+[data-theme="teatime"] .filter-bar,
 [data-theme="regal"] .stats-bar span,
 [data-theme="stellar"] .stats-bar span,
+[data-theme="teatime"] .stats-bar span,
 [data-theme="regal"] .overview-selector,
 [data-theme="stellar"] .overview-selector,
+[data-theme="teatime"] .overview-selector,
 [data-theme="regal"] .summary-card,
 [data-theme="stellar"] .summary-card,
+[data-theme="teatime"] .summary-card,
 [data-theme="regal"] .overview-table-wrap,
 [data-theme="stellar"] .overview-table-wrap,
+[data-theme="teatime"] .overview-table-wrap,
 [data-theme="regal"] .version-progress-panel,
 [data-theme="stellar"] .version-progress-panel,
+[data-theme="teatime"] .version-progress-panel,
 [data-theme="regal"] .backup-banner,
 [data-theme="stellar"] .backup-banner,
+[data-theme="teatime"] .backup-banner,
 [data-theme="regal"] .audit-section,
 [data-theme="stellar"] .audit-section,
+[data-theme="teatime"] .audit-section,
 [data-theme="regal"] .form-inline,
 [data-theme="stellar"] .form-inline,
+[data-theme="teatime"] .form-inline,
 [data-theme="regal"] .empty-state,
-[data-theme="stellar"] .empty-state {
+[data-theme="stellar"] .empty-state,
+[data-theme="teatime"] .empty-state {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border-strong);
   box-shadow: var(--shadow-soft), var(--panel-edge);
@@ -74,29 +116,44 @@
 }
 
 [data-theme="regal"] .nav-slider,
-[data-theme="stellar"] .nav-slider {
+[data-theme="stellar"] .nav-slider,
+[data-theme="teatime"] .nav-slider {
   border: 1px solid var(--glass-border-accent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-[data-theme="regal"] .version-group-block,
-[data-theme="stellar"] .version-group-block {
+[data-theme="regal"] .version-group-block {
   background: var(--glass-bg-soft);
   border-color: var(--glass-border);
 }
 
+[data-theme="stellar"] .version-group-block {
+  background: transparent;
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="teatime"] .version-group-block {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--glass-panel-shadow);
+}
+
 [data-theme="regal"] .panel-header h2,
 [data-theme="stellar"] .panel-header h2,
+[data-theme="teatime"] .panel-header h2,
 [data-theme="regal"] .version-block-header,
-[data-theme="stellar"] .version-block-header {
+[data-theme="stellar"] .version-block-header,
+[data-theme="teatime"] .version-block-header {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border-strong);
   box-shadow: var(--shadow-soft), var(--panel-edge);
 }
 
 [data-theme="regal"] .task-card-inner,
-[data-theme="stellar"] .task-card-inner {
+[data-theme="stellar"] .task-card-inner,
+[data-theme="teatime"] .task-card-inner {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border-strong);
   backdrop-filter: blur(10px) saturate(var(--glass-saturate));
@@ -105,12 +162,14 @@
 }
 
 [data-theme="regal"] .task-card-sub .task-card-inner,
-[data-theme="stellar"] .task-card-sub .task-card-inner {
+[data-theme="stellar"] .task-card-sub .task-card-inner,
+[data-theme="teatime"] .task-card-sub .task-card-inner {
   background: var(--glass-bg-soft);
 }
 
 [data-theme="regal"] .modal,
-[data-theme="stellar"] .modal {
+[data-theme="stellar"] .modal,
+[data-theme="teatime"] .modal {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border-strong);
   border-radius: var(--radius-lg);
@@ -121,30 +180,251 @@
 
 [data-theme="regal"] .field-select,
 [data-theme="stellar"] .field-select,
+[data-theme="teatime"] .field-select,
 [data-theme="regal"] .filter-bar input,
 [data-theme="stellar"] .filter-bar input,
+[data-theme="teatime"] .filter-bar input,
 [data-theme="regal"] .form-row input,
 [data-theme="stellar"] .form-row input,
+[data-theme="teatime"] .form-row input,
 [data-theme="regal"] .form-col input,
 [data-theme="stellar"] .form-col input,
+[data-theme="teatime"] .form-col input,
 [data-theme="regal"] .version-edit-form input,
-[data-theme="stellar"] .version-edit-form input {
+[data-theme="stellar"] .version-edit-form input,
+[data-theme="teatime"] .version-edit-form input {
   border-color: var(--glass-border);
   background-color: var(--glass-bg-soft);
 }
 
 [data-theme="regal"] body,
-[data-theme="stellar"] body {
+[data-theme="stellar"] body,
+[data-theme="teatime"] body {
   background: transparent;
 }
 
-/* 交互态保留主题色，面板保持中性玻璃 */
+[data-theme="stellar"] .task-card-inner {
+  backdrop-filter: blur(22px) saturate(1.15) brightness(1.03);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15) brightness(1.03);
+}
+
 [data-theme="stellar"] .task-card:hover .task-card-inner {
-  border-color: var(--glass-border-accent);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 20px rgba(255, 105, 180, 0.12);
+  border-color: rgba(94, 200, 255, 0.28) !important;
+  box-shadow:
+    0 10px 32px rgba(4, 8, 32, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 22px rgba(255, 126, 184, 0.12),
+    0 0 28px rgba(94, 200, 255, 0.1) !important;
 }
 
 [data-theme="regal"] .task-card:hover .task-card-inner {
   border-color: var(--glass-border-accent);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 0 16px rgba(80, 227, 255, 0.1);
+}
+
+[data-theme="teatime"] .task-card-inner {
+  backdrop-filter: blur(22px) saturate(1.08) brightness(1.02);
+  -webkit-backdrop-filter: blur(22px) saturate(1.08) brightness(1.02);
+}
+
+[data-theme="teatime"] .task-card:hover .task-card-inner {
+  border-color: rgba(201, 162, 39, 0.28) !important;
+  box-shadow:
+    0 8px 28px rgba(12, 8, 4, 0.22),
+    inset 0 1px 0 rgba(255, 248, 240, 0.12),
+    0 0 18px rgba(78, 184, 232, 0.1) !important;
+}
+
+/* ===== 星晶 / 琉璃：描边优先，减轻「雾块叠雾块」 ===== */
+[data-theme="stellar"] .filter-bar,
+[data-theme="teatime"] .filter-bar,
+[data-theme="stellar"] .stats-bar span,
+[data-theme="teatime"] .stats-bar span,
+[data-theme="stellar"] .overview-selector,
+[data-theme="teatime"] .overview-selector,
+[data-theme="stellar"] .summary-card,
+[data-theme="teatime"] .summary-card,
+[data-theme="stellar"] .version-progress-panel,
+[data-theme="teatime"] .version-progress-panel,
+[data-theme="stellar"] .backup-banner,
+[data-theme="teatime"] .backup-banner,
+[data-theme="stellar"] .audit-section,
+[data-theme="teatime"] .audit-section,
+[data-theme="stellar"] .form-inline,
+[data-theme="teatime"] .form-inline,
+[data-theme="stellar"] .empty-state,
+[data-theme="teatime"] .empty-state {
+  background: var(--glass-bg-soft);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(14px) saturate(var(--glass-saturate));
+}
+
+[data-theme="stellar"] .task-table-wrap,
+[data-theme="teatime"] .task-table-wrap,
+[data-theme="stellar"] .overview-table-wrap,
+[data-theme="teatime"] .overview-table-wrap {
+  background: var(--glass-bg-soft);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+}
+
+[data-theme="stellar"] .panel-header h2,
+[data-theme="teatime"] .panel-header h2,
+[data-theme="stellar"] .version-block-header,
+[data-theme="teatime"] .version-block-header {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--glass-border-strong);
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-theme="stellar"] .task-card-inner,
+[data-theme="teatime"] .task-card-inner {
+  background: var(--glass-bg-soft);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="stellar"] .group-section,
+[data-theme="teatime"] .group-section {
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  padding: 6px 8px 8px;
+}
+
+[data-theme="stellar"] .group-section.drop-target,
+[data-theme="teatime"] .group-section.drop-target {
+  background: var(--glass-bg-soft);
+  border-color: var(--glass-border-accent);
+}
+
+[data-theme="stellar"] .group-title,
+[data-theme="teatime"] .group-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--glass-border);
+  padding: 2px 2px 8px;
+  margin-bottom: 4px;
+}
+
+[data-theme="stellar"] .group-icon--folder {
+  color: rgba(94, 200, 255, 0.92);
+  filter: drop-shadow(0 0 4px rgba(94, 200, 255, 0.35));
+}
+
+[data-theme="stellar"] .group-icon--loose {
+  color: rgba(255, 200, 87, 0.88);
+}
+
+[data-theme="teatime"] .group-icon--folder {
+  color: rgba(201, 162, 39, 0.92);
+}
+
+[data-theme="teatime"] .group-icon--loose {
+  color: rgba(126, 200, 255, 0.85);
+}
+
+[data-theme="regal"] .group-icon--folder {
+  color: rgba(197, 160, 89, 0.9);
+}
+
+[data-theme="regal"] .group-icon--loose {
+  color: rgba(148, 163, 184, 0.85);
+}
+
+[data-theme="stellar"] .version-item:hover,
+[data-theme="teatime"] .version-item:hover {
+  border-color: var(--glass-border-strong);
+  background: var(--glass-bg-soft);
+}
+
+[data-theme="stellar"] .version-item.active,
+[data-theme="teatime"] .version-item.active {
+  border-color: var(--glass-border-accent);
+  box-shadow: inset 3px 0 0 var(--primary), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="stellar"] .version-group-header,
+[data-theme="teatime"] .version-group-header {
+  border-bottom-color: var(--glass-border-strong);
+}
+
+[data-theme="stellar"] .group-name,
+[data-theme="teatime"] .group-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== 琉璃：全站面板统一玻璃底（覆盖星晶「描边优先」的浅透规则）===== */
+[data-theme="teatime"] .filter-bar,
+[data-theme="teatime"] .stats-bar span,
+[data-theme="teatime"] .overview-selector,
+[data-theme="teatime"] .summary-card,
+[data-theme="teatime"] .version-progress-panel,
+[data-theme="teatime"] .backup-banner,
+[data-theme="teatime"] .form-inline,
+[data-theme="teatime"] .empty-state,
+[data-theme="teatime"] .task-table-wrap,
+[data-theme="teatime"] .overview-table-wrap,
+[data-theme="teatime"] .assignee-task-block.task-table-wrap,
+[data-theme="teatime"] .modal {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--glass-panel-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+[data-theme="teatime"] .task-card-inner,
+[data-theme="teatime"] .task-card-sub .task-card-inner,
+[data-theme="teatime"] .field-select,
+[data-theme="teatime"] .filter-bar input,
+[data-theme="teatime"] .form-row input,
+[data-theme="teatime"] .form-col input,
+[data-theme="teatime"] .version-edit-form input,
+[data-theme="teatime"] .overview-table th,
+[data-theme="teatime"] .overview-table tfoot td {
+  background: var(--glass-bg-inset);
+}
+
+[data-theme="teatime"] .overview-panel .version-block-header,
+[data-theme="teatime"] .version-block-header {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--glass-panel-shadow);
+}
+
+[data-theme="teatime"] .panel-header h2 {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--glass-border-strong);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-theme="teatime"] .group-section {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+}
+
+[data-theme="teatime"] .group-section.drop-target {
+  background: var(--glass-bg);
 }

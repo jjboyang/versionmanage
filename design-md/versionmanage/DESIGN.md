@@ -16,14 +16,25 @@ themes:
     glass-border: "rgba(255,255,255,0.12)"
     background: "/theme-furina-bg.png"
   stellar:
-    canvas: "#120422"
-    accent-primary: "#ff69b4"
-    accent-secondary: "#00e5ff"
-    accent-star: "#ffd54f"
-    glass-bg: "rgba(255,255,255,0.08)"
-    glass-border: "rgba(255,255,255,0.14)"
+    canvas: "#0a1438"
+    accent-primary: "#ff7eb8"
+    accent-secondary: "#5ec8ff"
+    accent-star: "#ffc857"
+    glass-bg: "rgba(10,18,48,0.28)"
+    glass-border: "pink-cyan iridescent on interaction"
     background: "/theme-stellar-bg.png"
     background-size: "1672x941"
+    narrative: "cosmic idol stage · sakura pink spotlight · gold filigree · prism ribbons"
+  teatime:
+    canvas: "#0a1628"
+    accent-primary: "#c73552"
+    accent-secondary: "#4eb8e8"
+    accent-gold: "#c9a227"
+    glass-bg: "rgba(255,255,255,0.08)"
+    glass-border: "rgba(201,162,39,0.38)"
+    background: "/theme-teatime-bg.png"
+    background-size: "1683x935"
+    narrative: "Victorian tea party · porcelain · clockwork · cerulean sky"
 
 components:
   panel:

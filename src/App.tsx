@@ -4,7 +4,6 @@ import VersionList from './components/VersionList'
 import TaskList from './components/TaskList'
 import Overview from './components/Overview'
 import AssigneeOverview from './components/AssigneeOverview'
-import AuditPanel from './components/AuditPanel'
 import {
   downloadBackup,
   importBackup,
@@ -129,8 +128,6 @@ export default function App() {
         return <Overview />
       case 'assignee':
         return <AssigneeOverview />
-      case 'audit':
-        return <AuditPanel />
     }
   }
 
