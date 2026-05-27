@@ -307,8 +307,8 @@ export default function TaskList({ versionId }: Props) {
 
       {/* Task Form Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => { setShowForm(false); setEditingId(null); setParentIdForNew(undefined) }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal">
             <div className="modal-header">
               <h3>
                 {editingId ? '编辑任务' : parentIdForNew

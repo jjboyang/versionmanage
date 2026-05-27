@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { Version, VersionStatus } from '../types'
 import { getVersions, addVersion, updateVersion, deleteVersion, getVersionGroups, getTasks } from '../store'
+import { GroupIcon } from './GroupIcon'
+import { CollapseToggle } from './CollapseToggle'
+import { usePersistedCollapsed } from '../hooks/usePersistedCollapsed'
+
+const COLLAPSED_GROUPS_KEY = 'vtm_version_list_collapsed_groups'
+const UNGROUPED_KEY = '__ungrouped__'
 
 const STATUS_OPTIONS: VersionStatus[] = ['未开始', '进行中', '已暂停', '已完成']
 const STATUS_CLASS: Record<VersionStatus, string> = {
@@ -40,6 +46,7 @@ export default function VersionList({ selectedId, onSelect }: Props) {
   // drag state
   const [dragId, setDragId] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const { isCollapsed, toggle, expand } = usePersistedCollapsed(COLLAPSED_GROUPS_KEY)
 
   // Task progress per version
   const versionProgress = useMemo(() => {
@@ -323,32 +330,77 @@ export default function VersionList({ selectedId, onSelect }: Props) {
       )}
 
       <div className="version-list">
-        {filteredGroups.map((g) => (
-          <div
-            key={g}
-            className={`group-section ${dropTarget === g ? 'drop-target' : ''}`}
-            onDragOver={(e) => handleDragOver(e, g)}
-            onDragLeave={() => handleDragLeave(g)}
-            onDrop={() => handleDrop(g)}
-          >
-            <div className="group-title">📁 {g}</div>
-            {versions.filter((v) => v.group === g).map(renderVersion)}
-            {dropTarget === g && <div className="drop-hint">释放以移入此分组</div>}
-          </div>
-        ))}
+        {filteredGroups.map((g) => {
+          const groupVersions = versions.filter((v) => v.group === g)
+          const collapsed = isCollapsed(g)
+          return (
+            <div
+              key={g}
+              className={`group-section${collapsed ? ' is-collapsed' : ''}${dropTarget === g ? ' drop-target' : ''}`}
+              onDragOver={(e) => {
+                if (collapsed) expand(g)
+                handleDragOver(e, g)
+              }}
+              onDragLeave={() => handleDragLeave(g)}
+              onDrop={() => handleDrop(g)}
+            >
+              <div className="group-title">
+                <div className="group-title__main">
+                  <GroupIcon variant="folder" />
+                  <span>{g}</span>
+                  <span className="group-title__count">({groupVersions.length})</span>
+                </div>
+                <CollapseToggle
+                  variant="compact"
+                  collapsed={collapsed}
+                  onToggle={() => toggle(g)}
+                />
+              </div>
+              {!collapsed && (
+                <>
+                  {groupVersions.map(renderVersion)}
+                  {dropTarget === g && <div className="drop-hint">释放以移入此分组</div>}
+                </>
+              )}
+            </div>
+          )
+        })}
 
-        {ungrouped.length > 0 && (
-          <div
-            className={`group-section ${dropTarget === '__ungrouped__' ? 'drop-target' : ''}`}
-            onDragOver={(e) => handleDragOver(e, '__ungrouped__')}
-            onDragLeave={() => handleDragLeave('__ungrouped__')}
-            onDrop={() => handleDrop('__ungrouped__')}
-          >
-            <div className="group-title">📄 未分组</div>
-            {ungrouped.map(renderVersion)}
-            {dropTarget === '__ungrouped__' && <div className="drop-hint">释放以取消分组</div>}
-          </div>
-        )}
+        {ungrouped.length > 0 && (() => {
+          const collapsed = isCollapsed(UNGROUPED_KEY)
+          return (
+            <div
+              className={`group-section${collapsed ? ' is-collapsed' : ''}${dropTarget === UNGROUPED_KEY ? ' drop-target' : ''}`}
+              onDragOver={(e) => {
+                if (collapsed) expand(UNGROUPED_KEY)
+                handleDragOver(e, '__ungrouped__')
+              }}
+              onDragLeave={() => handleDragLeave('__ungrouped__')}
+              onDrop={() => handleDrop('__ungrouped__')}
+            >
+              <div className="group-title">
+                <div className="group-title__main">
+                  <GroupIcon variant="loose" />
+                  <span>未分组</span>
+                  <span className="group-title__count">({ungrouped.length})</span>
+                </div>
+                <CollapseToggle
+                  variant="compact"
+                  collapsed={collapsed}
+                  onToggle={() => toggle(UNGROUPED_KEY)}
+                />
+              </div>
+              {!collapsed && (
+                <>
+                  {ungrouped.map(renderVersion)}
+                  {dropTarget === '__ungrouped__' && (
+                    <div className="drop-hint">释放以取消分组</div>
+                  )}
+                </>
+              )}
+            </div>
+          )
+        })()}
 
         {versions.length === 0 && (
           <div className="empty-hint">暂无版本，点击 + 创建</div>

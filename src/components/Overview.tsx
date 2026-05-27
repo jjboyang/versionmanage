@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { getVersions, getVersionGroups, getTasks } from '../store'
+import { GroupIcon } from './GroupIcon'
 
 const SELECTED_VERSIONS_KEY = 'vtm_overview_selected_versions'
 const STATUS_FILTER_KEY = 'vtm_overview_status_filter'
@@ -162,9 +163,14 @@ export default function Overview() {
                       onChange={() => selectGroup(groupVersions)}
                     />
                   </span>
-                  <span className="group-name" onClick={() => toggleCollapse(group)} style={{ cursor: 'pointer' }}>
-                    <span className="collapse-icon">{collapsed ? '▶' : '▼'}</span>{' '}
-                    {group === '未分组' ? '📄' : '📁'} {group}
+                  <span
+                    className="group-name"
+                    onClick={() => toggleCollapse(group)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className="collapse-icon">{collapsed ? '▶' : '▼'}</span>
+                    <GroupIcon variant={group === '未分组' ? 'loose' : 'folder'} />
+                    {group}
                   </span>
                   <span className="group-count">
                     {selectedCount}/{groupIds.length}

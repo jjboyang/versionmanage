@@ -4,6 +4,7 @@ import { initTheme } from './theme'
 import App from './App'
 import './themes.css'
 import './themes-stellar.css'
+import './themes-teatime.css'
 import './themes-immersive.css'
 import './App.css'
 
